@@ -1,7 +1,7 @@
 # #6 — CLI 收尾 + 全参数联调
 
 - **Type**: AFK
-- **Label**: `ready-for-agent`
+- **Label**: `done`
 - **Blocked by**: #3, #4, #5
 
 ## What to build

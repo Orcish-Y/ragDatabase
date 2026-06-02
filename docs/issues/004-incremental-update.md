@@ -1,7 +1,7 @@
 # #4 — 增量更新
 
 - **Type**: AFK
-- **Label**: `ready-for-agent`
+- **Label**: `done`
 - **Blocked by**: #3
 
 ## What to build

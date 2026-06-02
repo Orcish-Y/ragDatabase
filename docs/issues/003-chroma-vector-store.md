@@ -1,7 +1,7 @@
 # #3 — Chroma 向量库构建
 
 - **Type**: AFK
-- **Label**: `ready-for-agent`
+- **Label**: `done`
 - **Blocked by**: #2
 
 ## What to build

@@ -29,3 +29,10 @@ Thumbs.db
 .agents/settings.local.json
 .claude/skills/
 .claude/settings.local.json
+
+# Chroma 持久化数据库
+db/
+*.sqlite3
+
+# 嵌入模型（本地下载）
+models/

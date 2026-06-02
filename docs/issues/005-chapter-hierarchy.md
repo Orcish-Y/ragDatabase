@@ -1,7 +1,7 @@
 # #5 — 章层级推导 + 映射
 
 - **Type**: AFK
-- **Label**: `ready-for-agent`
+- **Label**: `done`
 - **Blocked by**: #1
 
 ## What to build
