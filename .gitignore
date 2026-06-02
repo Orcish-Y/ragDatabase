@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# 虚拟环境
+venv/
+.venv/
+
+# Chroma 数据库（本地测试产物）
+*.chroma/
+chroma_db/
+
+# 大数据文件
+data/*.docx
+data/*.png
+
+# IDE
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# agent
+.agents/skills/
+.agents/settings.local.json
+.claude/skills/
+.claude/settings.local.json

@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "rag-builder"
+version = "0.1.0"
+description = "通用 RAG 知识库建库工具 — 语义切分 + 父文档检索器"
+requires-python = ">=3.10"
+dependencies = [
+    "langchain>=0.3.0",
+    "langchain-chroma>=0.2.0",
+    "chromadb>=0.5.0",
+    "sentence-transformers>=3.0.0",
+]
+
+[project.scripts]
+rag-build = "rag_builder.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
