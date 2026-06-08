@@ -1,14 +1,13 @@
 """测试 CLI 入口。"""
 
-import io
-import sys
-import tempfile
+import argparse
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
-from rag_builder.cli import build_arg_parser, main
+from rag_builder.cli import build, build_arg_parser
+from .conftest import MockEmbedder
 
 
 def test_help_output():
@@ -27,18 +26,37 @@ def test_missing_input():
     assert exc.value.code != 0
 
 
-def test_file_not_found(capsys):
-    """文件不存在时报错。"""
-    test_args = ["-i", "/nonexistent.md", "-d", "/tmp/db"]
-    with patch.object(sys, "argv", ["rag-build"] + test_args):
-        with pytest.raises(SystemExit) as exc:
-            main()
-        assert exc.value.code == 1
-    captured = capsys.readouterr()
-    assert "不存在" in captured.err
+def test_file_not_found():
+    """文件不存在时抛出 FileNotFoundError。"""
+    args = argparse.Namespace(
+        input="/nonexistent.md", db="/tmp/db",
+        threshold=None, overlap=2, min_chunk=3, max_chunk=20,
+        chapter_map=None, category=None, model="mock",
+    )
+    with pytest.raises(FileNotFoundError, match="不存在"):
+        build(args)
 
 
-def test_end_to_end(tmp_path: Path, monkeypatch):
+def test_not_md():
+    """非 .md 文件抛出 ValueError。"""
+    import tempfile
+    with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
+        f.write(b"test")
+        path = f.name
+    try:
+        args = argparse.Namespace(
+            input=path, db="/tmp/db",
+            threshold=None, overlap=2, min_chunk=3, max_chunk=20,
+            chapter_map=None, category=None, model="mock",
+        )
+        with pytest.raises(ValueError, match="仅支持 .md"):
+            build(args)
+    finally:
+        import os
+        os.unlink(path)
+
+
+def test_end_to_end(tmp_path: Path):
     """完整端到端：mini .md → Chroma DB → 可检索。"""
     md = tmp_path / "test.md"
     md.write_text(
@@ -47,13 +65,16 @@ def test_end_to_end(tmp_path: Path, monkeypatch):
     )
     db = tmp_path / "chroma_db"
 
-    test_args = [
-        "-i", str(md),
-        "-d", str(db),
-    ]
-    with patch.object(sys, "argv", ["rag-build"] + test_args):
-        main()
+    args = argparse.Namespace(
+        input=str(md), db=str(db),
+        threshold=None, overlap=2, min_chunk=3, max_chunk=20,
+        chapter_map=None, category=None, model="mock",
+    )
 
-    # 验证 Chroma 目录存在
+    mock_embedder = MockEmbedder()
+    with patch("rag_builder.cli.DashScopeEmbedder", return_value=mock_embedder):
+        stats = build(args)
+
+    assert stats["inserted"] == 2
     assert db.exists()
     assert any(db.iterdir()), "Chroma DB 目录为空"

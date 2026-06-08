@@ -11,20 +11,7 @@ from rag_builder.document import Section
 from rag_builder.vector_store import VectorStore, make_doc_id
 
 
-class MockEmbedder:
-    """轻量 mock，返回固定维度随机向量。"""
-
-    def __init__(self, model_name: str = "mock"):
-        self.model_name = model_name
-
-    def embed(self, texts: list[str]) -> np.ndarray:
-        rng = np.random.default_rng(42)
-        vecs = rng.random((len(texts), 384)).astype(np.float32)
-        norms = np.linalg.norm(vecs, axis=1, keepdims=True)
-        return vecs / norms
-
-    def similarity(self, a, b):
-        return float(np.dot(a, b))
+from .conftest import MockEmbedder
 
 
 def make_section(sid="0101", title="测试", content="测试内容。第二句。") -> Section:
@@ -143,3 +130,35 @@ class TestMetadata:
         assert meta["source_file"] == "药典四部"
         assert "content_hash" in meta
         assert meta["chunk_index"] is not None
+
+
+# ── Parent Collection ──────────────────────────────────────────
+
+
+class TestParentCollection:
+    def test_parent_collection_exists(self, store_and_tmpdir):
+        store, _ = store_and_tmpdir
+        store.add_sections([make_section("0101", "片剂", "完整内容。第二句。")])
+        assert store.has_parent_collection()
+
+    def test_parent_content_is_full_section(self, store_and_tmpdir):
+        store, _ = store_and_tmpdir
+        full_text = "片剂系指原料药物制成的固体制剂。应符合崩解时限要求。"
+        store.add_sections([make_section("0101", "片剂", full_text)])
+
+        parent = store.get_parent_by_id("0101")
+        assert parent is not None
+        assert parent.page_content == full_text
+
+    def test_get_parent_returns_metadata(self, store_and_tmpdir):
+        store, _ = store_and_tmpdir
+        store.add_sections([make_section("0101", "片剂", "内容。")])
+
+        parent = store.get_parent_by_id("0101")
+        assert parent is not None
+        assert parent.metadata["section_id"] == "0101"
+        assert parent.metadata["section_title"] == "片剂"
+
+    def test_get_parent_not_found(self, store_and_tmpdir):
+        store, _ = store_and_tmpdir
+        assert store.get_parent_by_id("nonexistent") is None

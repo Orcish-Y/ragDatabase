@@ -6,7 +6,6 @@ from pathlib import Path
 
 from . import __version__
 from .config import (
-    DEFAULT_COLLECTION_NAME,
     DEFAULT_MAX_CHUNK_SENTENCES,
     DEFAULT_MIN_CHUNK_SENTENCES,
     DEFAULT_MODEL_NAME,
@@ -14,7 +13,7 @@ from .config import (
     DEFAULT_THRESHOLD_STD_DEV,
 )
 from .document import load_chapter_map, parse_markdown
-from .embedder import Embedder
+from .embedder import DashScopeEmbedder
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -68,54 +67,50 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="章映射 JSON 文件路径",
     )
     parser.add_argument(
+        "--category",
+        type=str,
+        default=None,
+        help="所有节的分类标签 (如 pharmaceutical)，写入 metadata 供 where 过滤",
+    )
+    parser.add_argument(
         "-m", "--model",
         type=str,
         default=DEFAULT_MODEL_NAME,
         help=f"嵌入模型名称 (默认: {DEFAULT_MODEL_NAME})",
     )
-    parser.add_argument(
-        "--hf-mirror",
-        type=str,
-        default=None,
-        help="HuggingFace 镜像站 (如 https://hf-mirror.com)",
-    )
     return parser
 
 
-def main() -> None:
-    parser = build_arg_parser()
-    args = parser.parse_args()
-
+def build(args: argparse.Namespace) -> dict[str, int]:
+    """执行建库流程，返回统计字典。可独立测试。"""
     input_path = Path(args.input)
     db_path = Path(args.db)
 
     # 输入文件校验
     if not input_path.exists():
-        print(f"错误: 文件不存在 — {input_path}", file=sys.stderr)
-        sys.exit(1)
+        raise FileNotFoundError(f"文件不存在: {input_path}")
     if input_path.suffix.lower() != ".md":
-        print(f"错误: 仅支持 .md 文件 — {input_path}", file=sys.stderr)
-        sys.exit(1)
+        raise ValueError(f"仅支持 .md 文件: {input_path}")
 
     # 加载章映射
     chapter_map = None
     if args.chapter_map:
         chapter_map_path = Path(args.chapter_map)
         if not chapter_map_path.exists():
-            print(f"错误: 章映射文件不存在 — {chapter_map_path}", file=sys.stderr)
-            sys.exit(1)
+            raise FileNotFoundError(f"章映射文件不存在: {chapter_map_path}")
         chapter_map = load_chapter_map(chapter_map_path)
 
     # 1. 文档解析
     print(f"解析文档: {input_path}")
     sections = parse_markdown(input_path, chapter_map=chapter_map)
+    if args.category:
+        for s in sections:
+            s.category = args.category
     print(f"  检测到 {len(sections)} 个节")
 
     # 2. 加载嵌入模型
-    print(f"加载模型: {args.model}")
-    if args.hf_mirror:
-        print(f"  镜像站: {args.hf_mirror}")
-    embedder = Embedder(args.model, mirror=args.hf_mirror)
+    print(f"加载嵌入模型: {args.model}")
+    embedder = DashScopeEmbedder(args.model)
 
     # 3. 向量库构建
     print(f"构建向量库: {db_path}")
@@ -125,7 +120,7 @@ def main() -> None:
 
     store = VectorStore(persist_dir=db_path, embedder=embedder)
 
-    stats = store.add_sections(
+    stats = store.add_sections_batch(
         sections,
         threshold=args.threshold,
         overlap=args.overlap,
@@ -146,6 +141,22 @@ def main() -> None:
     print(f"模型:   {args.model}")
     print(f"数据库: {db_path.absolute()}")
     print("=" * 50)
+
+    return stats
+
+
+def main() -> None:
+    """CLI 入口 — 解析参数 → 建库 → 错误处理。"""
+    from dotenv import load_dotenv
+    load_dotenv()
+    parser = build_arg_parser()
+    args = parser.parse_args()
+
+    try:
+        build(args)
+    except (FileNotFoundError, ValueError) as e:
+        print(f"错误: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

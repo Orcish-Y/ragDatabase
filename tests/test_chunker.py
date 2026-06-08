@@ -10,23 +10,9 @@ from rag_builder.chunker import (
     split_sentences,
 )
 from rag_builder.document import Section
-from rag_builder.embedder import Embedder
 
 
-# 轻量 mock embedder，不加载真实模型
-class MockEmbedder(Embedder):
-    """返回随机归一化向量，用于测试切分逻辑本身。"""
-
-    def __init__(self):
-        super().__init__("mock-model")
-        self._model = self  # 跳过加载
-
-    def embed(self, texts: list[str]) -> np.ndarray:
-        rng = np.random.default_rng(42)
-        vecs = rng.random((len(texts), 384)).astype(np.float32)
-        # 归一化
-        norms = np.linalg.norm(vecs, axis=1, keepdims=True)
-        return vecs / norms
+from .conftest import MockEmbedder
 
 
 class FixedEmbedder(MockEmbedder):

@@ -16,6 +16,7 @@ class Section:
     section_title: str
     content: str
     chapter: Optional[str] = None
+    category: str = ""
     source_file: str = ""
     content_hash: str = ""
     start_line: int = 0
