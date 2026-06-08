@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "rag-builder"
@@ -11,11 +11,14 @@ dependencies = [
     "langchain>=0.3.0",
     "langchain-chroma>=0.2.0",
     "chromadb>=0.5.0",
-    "sentence-transformers>=3.0.0",
+    "openai>=1.0",
+    "python-dotenv>=1.0",
+    "mcp[cli]>=1.0.0",
 ]
 
 [project.scripts]
 rag-build = "rag_builder.cli:main"
+rag-mcp = "rag_server.mcp_server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

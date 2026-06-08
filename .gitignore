@@ -4,18 +4,15 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+.pytest_cache/
 
 # 虚拟环境
 venv/
 .venv/
 
-# Chroma 数据库（本地测试产物）
-*.chroma/
-chroma_db/
-
-# 大数据文件
-data/*.docx
-data/*.png
+# Chroma 数据库
+db/
+*.sqlite3
 
 # IDE
 .idea/
@@ -24,8 +21,9 @@ data/*.png
 .DS_Store
 Thumbs.db
 
-# agent
-.agents/skills/
-.agents/settings.local.json
-.claude/skills/
-.claude/settings.local.json
+# 环境变量（API Key）
+.env
+
+# agent 本地配置
+.agents/
+.claude/

@@ -1,7 +1,7 @@
 # #1 — 项目脚手架 + 文档解析
 
 - **Type**: AFK
-- **Label**: `ready-for-agent`
+- **Label**: `done`
 - **Blocked by**: None — can start immediately
 
 ## What to build

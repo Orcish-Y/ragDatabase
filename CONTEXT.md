@@ -30,3 +30,13 @@ LangChain 提供的双存储模式：小 Chunk 存入向量索引（用于匹配
 
 ### 向量数据库 (Vector Store)
 Chroma，使用余弦相似度（Cosine Similarity）作为距离度量，HNSW 算法做近似最近邻搜索。
+建库时写入两个 Collection：`rag_documents`（chunk embedding 索引）和 `rag_parents`（父文档全文）。
+
+### 父文档 Collection (Parent Collection)
+Chroma 中与 chunk 索引并列的第二个 Collection。存储节全文，以 `section_id` 为主键，不参与向量相似度搜索。检索流程：chunk 命中 → 获取 `section_id` → 从 `rag_parents` 查询父文档 → 去重后返回整节全文。
+
+### MCP 服务 (MCP Server)
+基于 FastMCP 的检索服务。暴露单个 Tool `search_rag(query, k)`，输入自然语言查询，返回 top-k 个节的完整全文及元数据。通过 stdio（默认）或 HTTP/SSE 与 AI 客户端通信。启动参数仅需 `--db`（Chroma 数据库目录）。
+
+### 重排 (Rerank)
+可选的后处理步骤。Embedding 粗筛 top-N 候选后，用 Cross-Encoder 模型对每个 (query, doc) 对精确打分重新排序。MVP 不启用，预留在 `--rerank-model` 参数中。

@@ -1,7 +1,7 @@
 # #2 — 语义切分引擎
 
 - **Type**: AFK
-- **Label**: `ready-for-agent`
+- **Label**: `done`
 - **Blocked by**: #1
 
 ## What to build
