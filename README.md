@@ -15,8 +15,9 @@ pip install -e .
 ### 1. 配置 API Key
 
 ```bash
-# 创建 .env 文件
-echo "DASHSCOPE_API_KEY=sk-xxx" > .env
+cp .env.example .env
+# 编辑 .env，替换为你的真实 API Key
+# 获取地址: https://bailian.console.aliyun.com/
 ```
 
 ### 2. 建库
